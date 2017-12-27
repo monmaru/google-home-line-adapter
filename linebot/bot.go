@@ -1,54 +1,47 @@
 package linebot
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/line/line-bot-sdk-go/linebot"
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
 )
 
-var (
-	myGroupID string
-)
+var config Config
+
+// Config LINE setting
+type Config struct {
+	LineChannelSecret string
+	LineChannelToken  string
+	LineGroupID       string
+	FirebaseBaseURL   string
+	FirebaseSecret    string
+}
 
 type googleHomeMessage struct {
 	Text string `json:"text"`
 }
 
-type botHandler func(context.Context, *linebot.Client, http.ResponseWriter, *http.Request) *appError
-
-func withBotHandler(h botHandler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := appengine.NewContext(r)
-		bot, err := createBotClient(ctx)
-		if err != nil {
-			log.Criticalf(ctx, "linebot init error: %#v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if ae := h(ctx, bot, w, r); ae != nil {
-			msg := fmt.Sprintf("Handler error: status code: %d, message: %s, underlying err: %#v", ae.Code, ae.Message, ae.Error)
-			w.WriteHeader(ae.Code)
-			log.Errorf(ctx, msg)
-		}
-	}
+type firebaseMessage struct {
+	Message   string `json:"message"`
+	Timestamp int64  `json:"timestamp"`
 }
 
-func init() {
-	myGroupID = os.Getenv("LINE_GROUP_ID")
-	http.Handle("/", router())
+// Run line bot service
+func Run(c Config) {
+	config = c
+	http.Handle("/", route())
 }
 
-func router() *mux.Router {
+func route() *mux.Router {
 	router := mux.NewRouter()
 	// health check
 	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -59,25 +52,13 @@ func router() *mux.Router {
 	return router
 }
 
-func decodeJSON(rc io.ReadCloser, out interface{}) error {
-	defer rc.Close()
-	return json.NewDecoder(rc).Decode(&out)
-}
-
-func createBotClient(c context.Context) (*linebot.Client, error) {
-	return linebot.New(
-		os.Getenv("CHANNEL_SECRET"),
-		os.Getenv("CHANNEL_TOKEN"),
-		linebot.WithHTTPClient(urlfetch.Client(c)))
-}
-
 func handleGoogleHomeMessage(ctx context.Context, bot *linebot.Client, w http.ResponseWriter, r *http.Request) *appError {
 	var msg googleHomeMessage
 	if err := decodeJSON(r.Body, &msg); err != nil {
 		return appErrorf(err, http.StatusInternalServerError, "Error on decode JSON")
 	}
 
-	if _, err := bot.PushMessage(myGroupID, linebot.NewTextMessage(msg.Text)).WithContext(ctx).Do(); err != nil {
+	if _, err := bot.PushMessage(config.LineGroupID, linebot.NewTextMessage(msg.Text)).WithContext(ctx).Do(); err != nil {
 		return appErrorf(err, http.StatusInternalServerError, "Error on push message")
 	}
 
@@ -97,7 +78,7 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 	for _, event := range events {
 		switch event.Source.Type {
 		case linebot.EventSourceTypeGroup:
-			if event.Source.GroupID == myGroupID || event.Type == linebot.EventTypeMessage {
+			if event.Source.GroupID == config.LineGroupID || event.Type == linebot.EventTypeMessage {
 				if err := handleGroupMessageEvent(ctx, bot, event); err != nil {
 					return appErrorf(err, http.StatusInternalServerError, "Error on handleGroupMessageEvent")
 				}
@@ -121,7 +102,10 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 func handleGroupMessageEvent(ctx context.Context, bot *linebot.Client, event *linebot.Event) error {
 	switch msg := event.Message.(type) {
 	case *linebot.TextMessage:
-		if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(msg.Text)).WithContext(ctx).Do(); err != nil {
+		if err := saveMesagge2Firebase(ctx, msg.Text); err != nil {
+			return err
+		}
+		if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("お伝えします")).WithContext(ctx).Do(); err != nil {
 			return err
 		}
 		log.Debugf(ctx, "Got text!! %s", msg.Text)
@@ -131,16 +115,51 @@ func handleGroupMessageEvent(ctx context.Context, bot *linebot.Client, event *li
 	return nil
 }
 
-type appError struct {
-	Error   error
-	Message string
-	Code    int
+func saveMesagge2Firebase(ctx context.Context, msg string) error {
+	firebaseMessage := &firebaseMessage{
+		Message:   msg,
+		Timestamp: time.Now().Unix(),
+	}
+	body, err := encodeJSON(firebaseMessage)
+	if err != nil {
+		return err
+	}
+	// use firebase REST API
+	req, err := http.NewRequest(
+		"PUT",
+		fmt.Sprintf("%s/linebot/receive.json?auth=%s", config.FirebaseBaseURL, config.FirebaseSecret),
+		body)
+	if err != nil {
+		return err
+	}
+	resp, err := createHTTPClient(ctx).Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
 }
 
-func appErrorf(err error, code int, format string, v ...interface{}) *appError {
-	return &appError{
-		Error:   err,
-		Message: fmt.Sprintf(format, v...),
-		Code:    code,
+func decodeJSON(rc io.ReadCloser, out interface{}) error {
+	defer rc.Close()
+	return json.NewDecoder(rc).Decode(&out)
+}
+
+func encodeJSON(in interface{}) (io.Reader, error) {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return nil, err
 	}
+	return bytes.NewBuffer(b), nil
+}
+
+func createBotClient(ctx context.Context) (*linebot.Client, error) {
+	return linebot.New(
+		config.LineChannelSecret,
+		config.LineChannelToken,
+		linebot.WithHTTPClient(createHTTPClient(ctx)))
+}
+
+func createHTTPClient(ctx context.Context) *http.Client {
+	return urlfetch.Client(ctx)
 }
