@@ -22,6 +22,7 @@ type Config struct {
 	LineChannelSecret string
 	LineChannelToken  string
 	LineGroupID       string
+	LineBeaconHWID    string
 	FirebaseBaseURL   string
 	FirebaseSecret    string
 }
@@ -76,26 +77,42 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 	}
 
 	for _, event := range events {
-		switch event.Source.Type {
-		case linebot.EventSourceTypeGroup:
-			if event.Source.GroupID == config.LineGroupID || event.Type == linebot.EventTypeMessage {
-				if err := handleGroupMessageEvent(ctx, bot, &event); err != nil {
-					return appErrorf(err, http.StatusInternalServerError, "Error on handleGroupMessageEvent")
-				}
+		switch event.Type {
+		case linebot.EventTypeBeacon:
+			if err := handleBeaconEvent(ctx, bot, &event); err != nil {
+				return appErrorf(err, http.StatusInternalServerError, "Error on handleBeaconEvent")
 			}
-		case linebot.EventSourceTypeUser:
-			if event.Type == linebot.EventTypeMessage {
+		case linebot.EventTypeMessage:
+			switch event.Source.Type {
+			case linebot.EventSourceTypeGroup:
+				if event.Source.GroupID == config.LineGroupID {
+					if err := handleGroupMessageEvent(ctx, bot, &event); err != nil {
+						return appErrorf(err, http.StatusInternalServerError, "Error on handleGroupMessageEvent")
+					}
+				}
+			case linebot.EventSourceTypeUser:
 				// echo
 				if _, err := bot.ReplyMessage(event.ReplyToken, event.Message).WithContext(ctx).Do(); err != nil {
 					return appErrorf(err, http.StatusInternalServerError, "Error on reply message")
 				}
+			default:
+				log.Debugf(ctx, "Got other EventSourceType")
 			}
 		default:
 			log.Debugf(ctx, "Got other event!!")
 		}
 	}
-
 	w.WriteHeader(http.StatusOK)
+	return nil
+}
+
+func handleBeaconEvent(ctx context.Context, bot *linebot.Client, event *linebot.Event) error {
+	b := event.Beacon
+	if b.Hwid == config.LineBeaconHWID && b.Type == linebot.BeaconEventTypeEnter {
+		if err := saveMesagge2Firebase(ctx, "ただいま帰りました"); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
