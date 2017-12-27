@@ -79,7 +79,7 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 		switch event.Source.Type {
 		case linebot.EventSourceTypeGroup:
 			if event.Source.GroupID == config.LineGroupID || event.Type == linebot.EventTypeMessage {
-				if err := handleGroupMessageEvent(ctx, bot, event); err != nil {
+				if err := handleGroupMessageEvent(ctx, bot, &event); err != nil {
 					return appErrorf(err, http.StatusInternalServerError, "Error on handleGroupMessageEvent")
 				}
 			}
