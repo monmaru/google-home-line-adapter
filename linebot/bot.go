@@ -78,10 +78,12 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 
 	for _, event := range events {
 		switch event.Type {
-		case linebot.EventTypeBeacon:
-			if err := handleBeaconEvent(ctx, bot, &event); err != nil {
-				return appErrorf(err, http.StatusInternalServerError, "Error on handleBeaconEvent")
-			}
+		/*
+			case linebot.EventTypeBeacon:
+				if err := handleBeaconEvent(ctx, bot, &event); err != nil {
+					return appErrorf(err, http.StatusInternalServerError, "Error on handleBeaconEvent")
+				}
+		*/
 		case linebot.EventTypeMessage:
 			switch event.Source.Type {
 			case linebot.EventSourceTypeGroup:
@@ -119,13 +121,13 @@ func handleBeaconEvent(ctx context.Context, bot *linebot.Client, event *linebot.
 func handleGroupMessageEvent(ctx context.Context, bot *linebot.Client, event *linebot.Event) error {
 	switch msg := event.Message.(type) {
 	case *linebot.TextMessage:
-		if err := saveMesagge2Firebase(ctx, msg.Text); err != nil {
-			return err
-		}
-		if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("お伝えします")).WithContext(ctx).Do(); err != nil {
-			return err
-		}
-		log.Debugf(ctx, "Got text!! %s", msg.Text)
+		return saveMesagge2Firebase(ctx, msg.Text)
+		/*
+			if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("お伝えします")).WithContext(ctx).Do(); err != nil {
+				return err
+			}
+		*/
+		// log.Debugf(ctx, "Got text!! %s", msg.Text)
 	default:
 		log.Debugf(ctx, "Got other foramt!!")
 	}
@@ -149,6 +151,7 @@ func saveMesagge2Firebase(ctx context.Context, msg string) error {
 	if err != nil {
 		return err
 	}
+	req.WithContext(ctx)
 	resp, err := createHTTPClient(ctx).Do(req)
 	if err != nil {
 		return err
