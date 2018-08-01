@@ -6,13 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/line/line-bot-sdk-go/linebot"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
+	"gopkg.in/zabawaba99/firego.v1"
 )
 
 var config Config
@@ -24,16 +28,10 @@ type Config struct {
 	LineGroupID       string
 	LineBeaconHWID    string
 	FirebaseBaseURL   string
-	FirebaseSecret    string
 }
 
 type googleHomeMessage struct {
 	Text string `json:"text"`
-}
-
-type firebaseMessage struct {
-	Message   string `json:"message"`
-	Timestamp int64  `json:"timestamp"`
 }
 
 // Run line bot service
@@ -88,7 +86,7 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 			switch event.Source.Type {
 			case linebot.EventSourceTypeGroup:
 				if event.Source.GroupID == config.LineGroupID {
-					if err := handleGroupMessageEvent(ctx, bot, &event); err != nil {
+					if err := handleGroupMessageEvent(ctx, bot, event); err != nil {
 						return appErrorf(err, http.StatusInternalServerError, "Error on handleGroupMessageEvent")
 					}
 				}
@@ -121,13 +119,13 @@ func handleBeaconEvent(ctx context.Context, bot *linebot.Client, event *linebot.
 func handleGroupMessageEvent(ctx context.Context, bot *linebot.Client, event *linebot.Event) error {
 	switch msg := event.Message.(type) {
 	case *linebot.TextMessage:
+		log.Debugf(ctx, "Got text!! %s", msg.Text)
 		return saveMesagge2Firebase(ctx, msg.Text)
 		/*
 			if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("お伝えします")).WithContext(ctx).Do(); err != nil {
 				return err
 			}
 		*/
-		// log.Debugf(ctx, "Got text!! %s", msg.Text)
 	default:
 		log.Debugf(ctx, "Got other foramt!!")
 	}
@@ -135,29 +133,30 @@ func handleGroupMessageEvent(ctx context.Context, bot *linebot.Client, event *li
 }
 
 func saveMesagge2Firebase(ctx context.Context, msg string) error {
-	firebaseMessage := &firebaseMessage{
-		Message:   msg,
-		Timestamp: time.Now().Unix(),
-	}
-	body, err := encodeJSON(firebaseMessage)
+	jsonKey, err := ioutil.ReadFile("firebase_service_account.json")
 	if err != nil {
 		return err
 	}
-	// use firebase REST API
-	req, err := http.NewRequest(
-		"PUT",
-		fmt.Sprintf("%s/linebot/receive.json?auth=%s", config.FirebaseBaseURL, config.FirebaseSecret),
-		body)
+
+	conf, err := google.JWTConfigFromJSON(
+		jsonKey,
+		"https://www.googleapis.com/auth/userinfo.email",
+		"https://www.googleapis.com/auth/firebase.database")
+
 	if err != nil {
 		return err
 	}
-	req.WithContext(ctx)
-	resp, err := createHTTPClient(ctx).Do(req)
-	if err != nil {
-		return err
+
+	fb := firego.New(
+		fmt.Sprintf("%s/linebot/receive", config.FirebaseBaseURL),
+		conf.Client(ctx))
+
+	v := map[string]string{
+		"message":   msg,
+		"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
 	}
-	defer resp.Body.Close()
-	return nil
+
+	return fb.Set(v)
 }
 
 func decodeJSON(rc io.ReadCloser, out interface{}) error {

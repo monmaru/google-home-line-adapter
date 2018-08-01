@@ -2,44 +2,89 @@
 
 
 [[projects]]
-  branch = "master"
+  name = "cloud.google.com/go"
+  packages = ["compute/metadata"]
+  revision = "aad3f485ee528456e0768f20397b4d9dd941e755"
+  version = "v0.25.0"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
-  revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
-  version = "v1.1"
+  revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "7f08801859139f86dfafd1c296e2cba9a80d292e"
-  version = "v1.6.0"
+  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
+  version = "v1.6.2"
 
 [[projects]]
   name = "github.com/line/line-bot-sdk-go"
   packages = ["linebot"]
-  revision = "3a7d66f5efce6ac202f650134609f9d6d163a640"
-  version = "1.0.0"
+  revision = "12795b5eb20d5ef6df2e07a48c7b252bebe2191d"
+  version = "1.1.2"
+
+[[projects]]
+  branch = "v1"
+  name = "github.com/zabawaba99/firego"
+  packages = ["sync"]
+  revision = "07b2c0f4801299e0095418e4c224850f19b7dfcf"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","context/ctxhttp"]
-  revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
+  packages = [
+    "context",
+    "context/ctxhttp"
+  ]
+  revision = "afe8f62b1d6bbd81f31868121a50b06d8188e1f9"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+  packages = [
+    ".",
+    "google",
+    "internal",
+    "jws",
+    "jwt"
+  ]
+  revision = "3d292e4d0cdc3a0113e6d207bb137145ef1de42f"
 
 [[projects]]
   name = "google.golang.org/appengine"
-  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","log","urlfetch"]
-  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
-  version = "v1.0.0"
+  packages = [
+    ".",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api",
+    "internal/urlfetch",
+    "log",
+    "urlfetch"
+  ]
+  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "v1"
+  name = "gopkg.in/zabawaba99/firego.v1"
+  packages = ["."]
+  revision = "07b2c0f4801299e0095418e4c224850f19b7dfcf"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "45751b2ded04986d9005225a647b965df225d4d1b6c3f185a7e229be105d5d15"
+  inputs-digest = "b1c1fef4c19676d09200e60fe992f05d1cb7fc29135b0f650828bf3d13a4e939"
   solver-name = "gps-cdcl"
   solver-version = 1

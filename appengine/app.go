@@ -17,6 +17,5 @@ func loadEnv() linebot.Config {
 		LineGroupID:       os.Getenv("LINE_GROUP_ID"),
 		LineBeaconHWID:    os.Getenv("LINE_BEACON_HWID"),
 		FirebaseBaseURL:   os.Getenv("FIREBASE_BASE_URL"),
-		FirebaseSecret:    os.Getenv("FIREBASE_SECRET"),
 	}
 }
