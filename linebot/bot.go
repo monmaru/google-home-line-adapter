@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -151,9 +150,9 @@ func saveMesagge2Firebase(ctx context.Context, msg string) error {
 		fmt.Sprintf("%s/linebot/receive", config.FirebaseBaseURL),
 		conf.Client(ctx))
 
-	v := map[string]string{
+	v := map[string]interface{}{
 		"message":   msg,
-		"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
+		"timestamp": time.Now().Unix(),
 	}
 
 	return fb.Set(v)
