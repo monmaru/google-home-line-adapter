@@ -1,7 +1,6 @@
 package linebot
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,6 +19,8 @@ import (
 
 var config Config
 
+var jsonKey []byte
+
 // Config LINE setting
 type Config struct {
 	LineChannelSecret string
@@ -33,9 +34,19 @@ type googleHomeMessage struct {
 	Text string `json:"text"`
 }
 
+type firebaseMessage struct {
+	Message   string `json:"message"`
+	Timestamp int64  `json:"timestamp"`
+}
+
 // Run line bot service
 func Run(c Config) {
 	config = c
+	bytes, err := ioutil.ReadFile("firebase_service_account.json")
+	if err != nil {
+		panic(err)
+	}
+	jsonKey = bytes
 	http.Handle("/", route())
 }
 
@@ -132,11 +143,6 @@ func handleGroupMessageEvent(ctx context.Context, bot *linebot.Client, event *li
 }
 
 func saveMesagge2Firebase(ctx context.Context, msg string) error {
-	jsonKey, err := ioutil.ReadFile("firebase_service_account.json")
-	if err != nil {
-		return err
-	}
-
 	conf, err := google.JWTConfigFromJSON(
 		jsonKey,
 		"https://www.googleapis.com/auth/userinfo.email",
@@ -150,9 +156,9 @@ func saveMesagge2Firebase(ctx context.Context, msg string) error {
 		fmt.Sprintf("%s/linebot/receive", config.FirebaseBaseURL),
 		conf.Client(ctx))
 
-	v := map[string]interface{}{
-		"message":   msg,
-		"timestamp": time.Now().Unix(),
+	v := &firebaseMessage{
+		Message:   msg,
+		Timestamp: time.Now().Unix(),
 	}
 
 	return fb.Set(v)
@@ -161,14 +167,6 @@ func saveMesagge2Firebase(ctx context.Context, msg string) error {
 func decodeJSON(rc io.ReadCloser, out interface{}) error {
 	defer rc.Close()
 	return json.NewDecoder(rc).Decode(&out)
-}
-
-func encodeJSON(in interface{}) (io.Reader, error) {
-	b, err := json.Marshal(in)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewBuffer(b), nil
 }
 
 func createBotClient(ctx context.Context) (*linebot.Client, error) {
