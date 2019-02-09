@@ -2,63 +2,72 @@
 
 
 [[projects]]
+  digest = "1:4d6f036ea3fe636bcb2e89850bcdc62a771354e157cd51b8b22a2de8562bf663"
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
-  revision = "aad3f485ee528456e0768f20397b4d9dd941e755"
-  version = "v0.25.0"
+  pruneopts = "UT"
+  revision = "c9474f2f8deb81759839474b6bd1726bbfe1c1c4"
+  version = "v0.36.0"
 
 [[projects]]
+  digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
+  pruneopts = "UT"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
 
 [[projects]]
-  name = "github.com/gorilla/context"
-  packages = ["."]
-  revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
-  version = "v1.1.1"
-
-[[projects]]
+  digest = "1:ca59b1175189b3f0e9f1793d2c350114be36eaabbe5b9f554b35edee1de50aea"
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
-  version = "v1.6.2"
+  pruneopts = "UT"
+  revision = "a7962380ca08b5a188038c69871b8d3fbdf31e89"
+  version = "v1.7.0"
 
 [[projects]]
+  digest = "1:8916afc5d84ba716e5ea7efa66877ee79aae61dfa6a8b6f44cb6a06d433f5c7b"
   name = "github.com/line/line-bot-sdk-go"
   packages = ["linebot"]
-  revision = "12795b5eb20d5ef6df2e07a48c7b252bebe2191d"
-  version = "1.1.2"
+  pruneopts = "UT"
+  revision = "e5a5e660c973149748ecbdba957fb04d0504119c"
+  version = "v4.3.0"
 
 [[projects]]
   branch = "v1"
+  digest = "1:2bf910259b998c0ef31f741f2f0adff177013fa7dab7d2bb2f017cac0396e927"
   name = "github.com/zabawaba99/firego"
   packages = ["sync"]
-  revision = "07b2c0f4801299e0095418e4c224850f19b7dfcf"
+  pruneopts = "UT"
+  revision = "ce3fcf35d5c7d35453fd955280de6b0f95a83793"
 
 [[projects]]
   branch = "master"
+  digest = "1:f8b491a7c25030a895a0e579742d07136e6958e77ef2d46e769db8eec4e58fcd"
   name = "golang.org/x/net"
   packages = [
     "context",
-    "context/ctxhttp"
+    "context/ctxhttp",
   ]
-  revision = "afe8f62b1d6bbd81f31868121a50b06d8188e1f9"
+  pruneopts = "UT"
+  revision = "65e2d4e15006aab9813ff8769e768bbf4bb667a0"
 
 [[projects]]
   branch = "master"
+  digest = "1:511a6232760c10dcb1ebf1ab83ef0291e2baf801f203ca6314759c5458b73a6a"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "google",
     "internal",
     "jws",
-    "jwt"
+    "jwt",
   ]
-  revision = "3d292e4d0cdc3a0113e6d207bb137145ef1de42f"
+  pruneopts = "UT"
+  revision = "99b60b757ec124ebb7d6b7e97f153b19c10ce163"
 
 [[projects]]
+  digest = "1:fa13db8cfb0955500a7565a080eb4c0985237b414c31c4b694821b6f1d23dd50"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -71,20 +80,31 @@
     "internal/remote_api",
     "internal/urlfetch",
     "log",
-    "urlfetch"
+    "urlfetch",
   ]
-  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
-  version = "v1.1.0"
+  pruneopts = "UT"
+  revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
+  version = "v1.4.0"
 
 [[projects]]
   branch = "v1"
+  digest = "1:a119f21486e460bccd87a2af2e70c073f5bbb658fae89af4da51b0732cda1721"
   name = "gopkg.in/zabawaba99/firego.v1"
   packages = ["."]
-  revision = "07b2c0f4801299e0095418e4c224850f19b7dfcf"
+  pruneopts = "UT"
+  revision = "ce3fcf35d5c7d35453fd955280de6b0f95a83793"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b1c1fef4c19676d09200e60fe992f05d1cb7fc29135b0f650828bf3d13a4e939"
+  input-imports = [
+    "github.com/gorilla/mux",
+    "github.com/line/line-bot-sdk-go/linebot",
+    "golang.org/x/oauth2/google",
+    "google.golang.org/appengine",
+    "google.golang.org/appengine/log",
+    "google.golang.org/appengine/urlfetch",
+    "gopkg.in/zabawaba99/firego.v1",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

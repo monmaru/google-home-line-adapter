@@ -6,10 +6,5 @@ handlers:
   script: _go_app
   secure: always
 
-env_variables:
-  # Your settings
-  LINE_CHANNEL_SECRET: 
-  LINE_CHANNEL_TOKEN: 
-  LINE_GROUP_ID: 
-  LINE_BEACON_HWID: 
-  FIREBASE_BASE_URL: 
+includes:
+- secret.yaml

@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
-	"gopkg.in/zabawaba99/firego.v1"
+	firego "gopkg.in/zabawaba99/firego.v1"
 )
 
 var config Config
@@ -102,8 +102,11 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 				}
 			case linebot.EventSourceTypeUser:
 				// echo
-				if _, err := bot.ReplyMessage(event.ReplyToken, event.Message).WithContext(ctx).Do(); err != nil {
-					return appErrorf(err, http.StatusInternalServerError, "Error on reply message")
+				switch message := event.Message.(type) {
+				case *linebot.TextMessage:
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
+						return appErrorf(err, http.StatusInternalServerError, "Error on reply message")
+					}
 				}
 			default:
 				log.Debugf(ctx, "Got other EventSourceType")
