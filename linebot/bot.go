@@ -104,7 +104,10 @@ func handleLineEvent(ctx context.Context, bot *linebot.Client, w http.ResponseWr
 				// echo
 				switch message := event.Message.(type) {
 				case *linebot.TextMessage:
-					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
+					if err := saveMesagge2Firebase(ctx, message.Text); err != nil {
+						return appErrorf(err, http.StatusInternalServerError, "Error on saveMesagge2Firebase")
+					}
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(fmt.Sprintf("「%s」とお伝えします", message.Text))).Do(); err != nil {
 						return appErrorf(err, http.StatusInternalServerError, "Error on reply message")
 					}
 				}
