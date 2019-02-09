@@ -18,3 +18,4 @@ vendor
 firebasewatcher/serviceAccountKey.json
 appengine/firebase_service_account.json
 appengine/secret.yaml
+liff/build
