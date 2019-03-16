@@ -71,6 +71,10 @@ func handleGoogleHomeMessage(ctx context.Context, bot *linebot.Client, w http.Re
 		return appErrorf(err, http.StatusInternalServerError, "Error on push message")
 	}
 
+	if err := saveMesagge2Firebase(ctx, msg.Text); err != nil {
+		return appErrorf(err, http.StatusInternalServerError, "Error on saveMesagge2Firebase")
+	}
+
 	w.WriteHeader(http.StatusOK)
 	return nil
 }
